@@ -15,6 +15,8 @@ Important notes for submission:
 """
 import datetime
 import typing
+import re
+import collections
 
 
 class ArticleField:
@@ -33,11 +35,39 @@ class Article:
       self.publication_date = publication_date
       self.content = content
 
+    def __repr__(self):
+        return "<Article title=" + repr(self.title) + " author=" + repr(self.author) + " publication_date=" + \
+               repr(datetime.datetime.isoformat(self.publication_date)) + ">"
+
+    def __len__(self):
+        return len(self.content)
+
+    def short_introduction(self, n_characters: int):
+        if len(self.content) <= n_characters:
+            return self.content
+
+        intro = self.content[0:n_characters+1]
+        last_space = intro.rfind(" ")
+        last_newline = intro.rfind("\n")
+        highest_index = max(last_newline, last_space)
+        return self.content[:highest_index]
+
+    def most_common_words(self, n_words: int):
+        lowercase = self.content.lower()
+        regexed = re.sub('[^0-9a-zA-Z]', " ", lowercase)
+        words = regexed.split()
+        word_count = collections.Counter(words)
+        most_freq = dict(word_count.most_common(n_words))
+
+        return most_freq
 
 fairytale = Article(
   title="The emperor's new clothes",
   author="Hans Christian Andersen",
-  content="'But he has nothing at all on!' at last cried out all the people. The Emperor was vexed, for he knew that the people were right.",
+  content="'But he has nothing at all on!' at last cried out all the people. "
+          "The Emperor was vexed, for he knew that the people were right.",
   publication_date=datetime.datetime(1837, 4, 7, 12, 15, 0),
   )
-print(fairytale.title)
+
+print(fairytale.most_common_words(5))
+print(fairytale.most_common_words(3))
