@@ -83,3 +83,34 @@ class ArticleField:
 
     def __init__(self, field_type: typing.Type[typing.Any]):
         self.field_type = field_type
+        self.attribute_name = None
+
+    def __set_name__(self, owner, name):
+        if self.attribute_name is None:
+            self.attribute_name = name
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+
+        try:
+            value = instance.__dict__[self.attribute_name]
+        except KeyError:
+            classname = owner.__name__
+            raise AttributeError(
+                f"{classname} object has no attribute {self.attribute_name}"
+            ) from None
+
+        return value
+
+    def __set__(self, instance, value):
+        if not isinstance(value, self.field_type):
+            expected = self.field_type.__name__
+            got_type = type(value).__name__
+
+            raise TypeError(
+                f"expected an instance of type {expected!r} for attribute "
+                f"{self.attribute_name!r}, got {got_type!r} instead"
+            )
+
+        instance.__dict__[self.attribute_name] = value
