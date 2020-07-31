@@ -17,23 +17,23 @@ import datetime
 import typing
 import re
 import collections
+import itertools
 
-
-class ArticleField:
-    """The `ArticleField` class for the Advanced Requirements."""
-
-    def __init__(self, field_type: typing.Type[typing.Any]):
-        pass
+AnyType = typing.TypeVar("AnyType")
 
 
 class Article:
     """The `Article` class you need to write for the qualifier."""
 
+    article_id = itertools.count()
+
     def __init__(self, title: str, author: str, publication_date: datetime.datetime, content: str):
-      self.title = title
-      self.author = author
-      self.publication_date = publication_date
-      self.content = content
+        self.title = title
+        self.author = author
+        self.publication_date = publication_date
+        self._content = content
+        self.id = next(self.article_id)
+        self.last_edited = None
 
     def __repr__(self):
         return "<Article title=" + repr(self.title) + " author=" + repr(self.author) + " publication_date=" + \
@@ -46,7 +46,7 @@ class Article:
         if len(self.content) <= n_characters:
             return self.content
 
-        intro = self.content[0:n_characters+1]
+        intro = self.content[0:n_characters + 1]
         last_space = intro.rfind(" ")
         last_newline = intro.rfind("\n")
         highest_index = max(last_newline, last_space)
@@ -61,13 +61,25 @@ class Article:
 
         return most_freq
 
-fairytale = Article(
-  title="The emperor's new clothes",
-  author="Hans Christian Andersen",
-  content="'But he has nothing at all on!' at last cried out all the people. "
-          "The Emperor was vexed, for he knew that the people were right.",
-  publication_date=datetime.datetime(1837, 4, 7, 12, 15, 0),
-  )
+    @property
+    def content(self) -> str:
+        return self._content
 
-print(fairytale.most_common_words(5))
-print(fairytale.most_common_words(3))
+    @content.setter
+    def content(self, new_content: str) -> None:
+        self._content = new_content
+        self.last_edited = datetime.datetime.now()
+
+    def __lt__(self, other_article):
+
+        if not isinstance(other_article, Article):
+            return NotImplemented
+
+        return self.publication_date < other_article.publication_date
+
+
+class ArticleField:
+    """The `ArticleField` class for the Advanced Requirements."""
+
+    def __init__(self, field_type: typing.Type[typing.Any]):
+        self.field_type = field_type
